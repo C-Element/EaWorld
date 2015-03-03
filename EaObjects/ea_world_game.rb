@@ -9,6 +9,7 @@ $mob = {:width => 32, :mid_width => 16, :height => 32, :mid_height => 16, :def_x
 $window = {:width => 640, :max_width => 1600, :mid_width => 320, :height => 480, :max_height => 1600,
            :mid_height => 240}
 $full_screen = false
+$last_near = nil
 
 ARGV.each do |arg|
   if arg == '-f'
@@ -23,21 +24,23 @@ class EaWorldGame < Gosu::Window
     self.caption = '..:: Ea World ::..'
     @map = Gosu::Tiled.load_json(self, 'teste_mage_city.json')
     @x = @y = 50
+    @font = Gosu::Font.new(self, Gosu::default_font_name, 20)
     @player = Player.new(self, $mob[:def_x], $mob[:def_y])
     @guard1 = Guard.new(self, 306, 454)
     @guard2 = Guard.new(self, 416, 454)
     @bicho1 = Monster.new(self, 560, 582)
-    @bicho2 = Monster.new(self, 776,448, false)
-    @bicho3 = Monster.new(self, 274,506)
+    @bicho2 = Monster.new(self, 776, 448, false)
+    @bicho3 = Monster.new(self, 274, 506)
     @speed = 2
   end
 
   def button_down(id)
     if id == Gosu::KbEscape
       close
-    elsif id == Gosu::KbSpace
-      print "%d, %d" % [(@x + @player.x), (@y + @player.y)]
-      puts
+    elsif id == Gosu::KbA
+      if @map.near
+        puts "Sorry, but #{@map.near} not know what speak!!"
+      end
     end
   end
 
@@ -177,5 +180,8 @@ class EaWorldGame < Gosu::Window
     @bicho2.draw
     @bicho3.draw
     @map.draw(@x, @y)
+    if @map.near
+      @font.draw("Press A to interact with #{@map.near}", 10, 10, 2, 1, 1, 0xff0082ff, :additive)
+    end
   end
 end

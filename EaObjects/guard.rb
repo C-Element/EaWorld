@@ -15,10 +15,4 @@ class Guard
   def draw(map_x, map_y)
     @next.draw(@x - map_x, @y - map_y, 0.9)
   end
-
-  def collides?(map_x, map_y, player_x, player_y, speed, move_on_x=true)
-    if (@x - map_x + (move_on_x ? speed : 0)) > 1
-
-    end
-  end
 end
