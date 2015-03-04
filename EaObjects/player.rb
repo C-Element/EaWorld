@@ -5,6 +5,7 @@ class Player
 
   def initialize(window, pos_x, pos_y)
     @i1, @i2, @i3, @i4, @i5, @i6, @i7, @i8, @i9, @i10, @i11, @i12 = Gosu::Image.load_tiles(window, 'player.png', 32, 32, false)
+    @iw1, @iw2, @iw3, @iw4, @iw5, @iw6, @iw7, @iw8, @iw9, @iw10, @iw11, @iw12 = Gosu::Image.load_tiles(window, 'player_water.png', 32, 32, false)
     @x = pos_x
     @y = pos_y
     @next = @i1

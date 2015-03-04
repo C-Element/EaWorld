@@ -23,8 +23,10 @@ class EaWorldGame < Gosu::Window
     super 640, 480, $full_screen
     self.caption = '..:: Ea World ::..'
     @map = Gosu::Tiled.load_json(self, 'teste_mage_city.json')
+    @balloon = Gosu::Image.new(self, 'balloon.png', false)
     @x = @y = 50
     @font = Gosu::Font.new(self, Gosu::default_font_name, 20)
+    @font2 = Gosu::Font.new(self, Gosu::default_font_name, 20)
     @player = Player.new(self, $mob[:def_x], $mob[:def_y])
     @guard1 = Guard.new(self, 306, 454)
     @guard2 = Guard.new(self, 416, 454)
@@ -32,6 +34,8 @@ class EaWorldGame < Gosu::Window
     @bicho2 = Monster.new(self, 776, 448, false)
     @bicho3 = Monster.new(self, 274, 506)
     @speed = 2
+    @show_text = nil
+    @time_text = nil
   end
 
   def button_down(id)
@@ -39,7 +43,8 @@ class EaWorldGame < Gosu::Window
       close
     elsif id == Gosu::KbA
       if @map.near
-        puts "Sorry, but #{@map.near} not know what speak!!"
+        @time_text = Gosu.milliseconds
+        @show_text = "Sorry, but #{@map.near} not know what speak!!"
       end
     end
   end
@@ -181,7 +186,10 @@ class EaWorldGame < Gosu::Window
     @bicho3.draw
     @map.draw(@x, @y)
     if @map.near
-      @font.draw("Press A to interact with #{@map.near}", 10, 10, 2, 1, 1, 0xff0082ff, :additive)
+      @font.draw("Press A to interact with #{@map.near}", 10, 10, 10, 1, 1, 0xff0082ff, :additive)
+    end
+    if @show_text && Gosu.milliseconds <= @time_text + 3000
+      @balloon.draw(256-@x, 350-@y,10)
     end
   end
 end
