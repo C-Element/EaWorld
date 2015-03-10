@@ -1,17 +1,22 @@
 require 'gosu'
 
 class Player
-  attr_accessor :x, :y
+  attr_accessor :x, :y, :width, :mid_width, :height, :mid_height, :def_x, :def_y, :foot_dist
 
-  def initialize(window, pos_x, pos_y)
-    @i1, @i2, @i3, @i4, @i5, @i6, @i7, @i8, @i9, @i10, @i11, @i12 = Gosu::Image.load_tiles(window, 'player.png', 32, 32, false)
-    @iw1, @iw2, @iw3, @iw4, @iw5, @iw6, @iw7, @iw8, @iw9, @iw10, @iw11, @iw12 = Gosu::Image.load_tiles(window, 'player_water.png', 32, 32, false)
-    @x = pos_x
-    @y = pos_y
-    @next = @i1
+  def initialize(window)
     @last_time = -1
-    @walk_group = [@i1, @i2, @i3]
     @speed = 2
+    @width = 32
+    @mid_width = 16
+    @height = 32
+    @mid_height = 16
+    @x = @def_x = 304
+    @y = @def_y = 224
+    @foot_dist = 27
+    @i1, @i2, @i3, @i4, @i5, @i6, @i7, @i8, @i9, @i10, @i11, @i12 = Gosu::Image.load_tiles(window, 'player.png', @width, @height, false)
+    @iw1, @iw2, @iw3, @iw4, @iw5, @iw6, @iw7, @iw8, @iw9, @iw10, @iw11, @iw12 = Gosu::Image.load_tiles(window, 'player_water.png', @width, @height, false)
+    @next = @i1
+    @walk_group = [@i1, @i2, @i3]
   end
 
   def draw
