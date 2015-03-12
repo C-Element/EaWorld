@@ -17,16 +17,23 @@ ARGV.each do |arg|
   end
 end
 
-
 class EaWorldGame < Gosu::Window
   def initialize
     super 640, 480, $full_screen
     self.caption = '..:: Ea World ::..'
     @map = Gosu::Tiled.load_json(self, 'teste_mage_city.json')
+    # Balloons
     @balloon_twin1 = Gosu::Image.new(self, 'balloon_twin1.png', false)
     @balloon_twin2 = Gosu::Image.new(self, 'balloon_twin2.png', false)
+    @balloon_blue = Gosu::Image.new(self, 'balloon_blue.png', false)
+    # Flowers
+    flower_red = Gosu::Image.new(self, 'red.png', false)
+    flower_pink = Gosu::Image.new(self, 'light_pink.png', false)
+    flower_blue = Gosu::Image.new(self, 'blue.png', false)
     @x = @y = 50
     @font = Gosu::Font.new(self, Gosu::default_font_name, 20)
+    @font_score = Gosu::Font.new(self, Gosu::default_font_name, 25)
+    @font_time = Gosu::Font.new(self, Gosu::default_font_name, 25)
     @player = Player.new(self)
     #Guards
     @guard1 = NPC.new(self, 306, 454, 'guard.png')
@@ -42,19 +49,67 @@ class EaWorldGame < Gosu::Window
     @monsters = [etoi_horea1, etoi_horea2, etoi_horea3]
     @speed = 2
     @show_balloon = nil
-    @time_balloon = nil
+    @score = 666999
+    @active_quest = nil
+    @start_quest = Gosu.milliseconds
+    @quest_functions = {:quest1 => {:points => 'q1_add_points',
+                                    :flower => 'q1_add_flower',
+                                    :last_flower => 0,
+                                    :flowers_list => [],
+                                    :flowers_slots => [],
+                                    :time => 120,
+                                    :img => flower_blue,
+                                    :size => 16,
+                                    :x => 800,
+                                    :x_max => 880,
+                                    :y => 480,
+                                    :y_max => 608},
+                        :quest2 => {:points => 'q2_add_points',
+                                    :flower => 'q2_add_flower',
+                                    :last_flower => 0,
+                                    :flowers_list => [],
+                                    :flowers_slots => [],
+                                    :time => 120,
+                                    :img => flower_pink,
+                                    :size => 16,
+                                    :x => 128,
+                                    :x_max => 528,
+                                    :y => 1024,
+                                    :y_max => 1152},
+                        :quest3 => {:points => 'q3_add_points',
+                                    :flower => 'q3_add_flower',
+                                    :last_flower => 0,
+                                    :flowers_list => [],
+                                    :flowers_slots => [],
+                                    :time => 120,
+                                    :img => flower_red,
+                                    :size => 16,
+                                    :x => [800, 928],
+                                    :x_max => [880, 1104],
+                                    :y => 48,
+                                    :y_max => 1176}
+    }
+    initialize_q1
   end
 
   def button_down(id)
     if id == Gosu::KbEscape
       close
     elsif id == Gosu::KbA
-      if @map.near
-        @time_balloon = Gosu.milliseconds
-        if @map.near == 'Twin1'
-          @show_balloon = 'draw_twin1_msg'
-        elsif @map.near == 'Twin2'
-          @show_balloon = 'draw_twin2_msg'
+      if @show_balloon
+        if @show_balloon == 'draw_blue_msg'
+          initialize_q1
+        end
+        @show_balloon = nil
+      else
+        if @map.near
+          if @map.near == 'Twin1'
+            @show_balloon = 'draw_twin1_msg'
+          elsif @map.near == 'Twin2'
+            @show_balloon = 'draw_twin2_msg'
+          elsif @map.near == 'Woman'
+            @show_balloon = 'draw_blue_msg'
+          end
         end
       end
     elsif id == Gosu::KbSpace
@@ -62,9 +117,6 @@ class EaWorldGame < Gosu::Window
         puts "\n"
       }
       puts "#{(@x + @player.x)}, #{@y + @player.y}"
-      @monsters.each { |monster|
-        monster.position
-      }
     end
   end
 
@@ -83,8 +135,43 @@ class EaWorldGame < Gosu::Window
     @monsters.each { |monster|
       monster.update(@x, @y)
       monster.walk
-      reset_player if  monster.colides?(@x, @y, @player)
+      reset_player if monster.colides?(@x, @y, @player)
     }
+  end
+
+  def get_time_left(total_seconds)
+    time_now = total_seconds - ((Gosu.milliseconds-@start_quest)/1000)
+    minutes = time_now/60
+    seconds = time_now%60
+    [minutes, seconds]
+  end
+
+  def initialize_q1
+    @active_quest = @quest_functions[:quest1]
+    @start_quest = Gosu.milliseconds
+  end
+
+  def q1_add_flower
+    size = 16
+    x = 800
+    x_max = 880
+    y = 480
+    y_max = 608
+    c = 0
+    actual_amount = @quest_functions[:quest1][:flowers_list].size
+    while @quest_functions[:quest1][:flowers_list].size == actual_amount
+      position_x = rand(x..x_max)
+      position_y = rand(y..y_max)
+      if actual_amount == 0
+        @quest_functions[:quest1][:flowers_list] << [position_x, position_y]
+      else
+        @quest_functions[:quest1][:flowers_list].each { |coord|
+          unless coord[1] <= position_y && position_y <= coord[1] + size && coord[0] <= position_x && position_x <= coord[0] + size
+            @quest_functions[:quest1][:flowers_list] << [position_x, position_y]
+          end
+        }
+      end
+    end
   end
 
   def player_move_left
@@ -194,6 +281,10 @@ class EaWorldGame < Gosu::Window
     @balloon_twin2.draw(220-@x, 400-@y, 10)
   end
 
+  def draw_blue_msg
+    @balloon_blue.draw(220-@x, 400-@y, 10)
+  end
+
   def draw
     @player.draw
     @guard1.draw(@x, @y)
@@ -206,10 +297,29 @@ class EaWorldGame < Gosu::Window
     }
     @map.draw(@x, @y)
     if @map.near
-      @font.draw("Pressione A para interagir com #{@map.near}", 10, 10, 10, 1, 1, 0xff0082ff, :default)
+      @font.draw("Pressione A para interagir com #{@map.near}", 10, 30, 10, 1, 1, 0xffffffff, :default)
+    else
+      @show_balloon = nil
     end
-    if @show_balloon && Gosu.milliseconds <= @time_balloon + 5000
+    if @show_balloon
       send(@show_balloon)
     end
+    if @active_quest
+      time_left = get_time_left(@active_quest[:time])
+      if time_left[0] > 0 || (time_left[0] == 0 && time_left[1] >= 1)
+        if @active_quest[:last_flower] != time_left
+          send(@active_quest[:flower])
+          @active_quest[:last_flower] = time_left
+        end
+        formated_time = "%02d:%02d" % time_left
+        @font_time.draw("<b>TEMPO RESTANTE: #{formated_time}", 370, 10, 10, 1, 1, 0xff000000, :default)
+        @active_quest[:flowers_list].each { |coord|
+          @active_quest[:img].draw(coord[0] - @x, coord[1] - @y, 1)
+        }
+      else
+        @active_quest = nil
+      end
+    end
+    @font_score.draw("<b>PONTOS: #{@score}</b>", 10, 10, 10, 1, 1, 0xff000000, :default)
   end
 end

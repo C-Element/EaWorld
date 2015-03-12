@@ -7,7 +7,7 @@ class Monster
     @horizontal = horizontal
     @width = 24
     @height = 32
-    image = ((rand * 1 + 6) %2 == 0 ? 'bicho001.png' : 'bicho002.png')
+    image = ((rand * 1 + 6) %2 == 0 ? 'mosnter001.png' : 'monster002.png')
     @i1, @i2, @i3, @i4, @i5, @i6, @i7, @i8, @i9, @i10, @i11, @i12 = Gosu::Image.load_tiles(window, image, @width, @height, false)
     @next = (@horizontal ? @i4 : @i7)
     @last_time = -1
