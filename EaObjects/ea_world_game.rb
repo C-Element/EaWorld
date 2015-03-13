@@ -26,11 +26,12 @@ class EaWorldGame < Gosu::Window
     @balloon_twin1 = Gosu::Image.new(self, 'balloon_twin1.png', false)
     @balloon_twin2 = Gosu::Image.new(self, 'balloon_twin2.png', false)
     @balloon_blue = Gosu::Image.new(self, 'balloon_blue.png', false)
+    @balloon_pink = Gosu::Image.new(self, 'balloon_pink.png', false)
+    @balloon_red = Gosu::Image.new(self, 'balloon_red.png', false)
     # Flowers
     flower_red = Gosu::Image.new(self, 'red.png', false)
     flower_pink = Gosu::Image.new(self, 'light_pink.png', false)
     flower_blue = Gosu::Image.new(self, 'blue.png', false)
-    @x = @y = 50
     @font = Gosu::Font.new(self, Gosu::default_font_name, 20)
     @font_score = Gosu::Font.new(self, Gosu::default_font_name, 25)
     @font_time = Gosu::Font.new(self, Gosu::default_font_name, 25)
@@ -52,44 +53,48 @@ class EaWorldGame < Gosu::Window
     @score = 666999
     @active_quest = nil
     @start_quest = Gosu.milliseconds
-    @quest_functions = {:quest1 => {:points => 'q1_add_points',
-                                    :flower => 'q1_add_flower',
+    @finished_quest = []
+    @quest_functions = {:quest1 => {:points => 1,
                                     :last_flower => 0,
                                     :flowers_list => [],
                                     :flowers_slots => [],
                                     :time => 120,
                                     :img => flower_blue,
                                     :size => 16,
-                                    :x => 800,
-                                    :x_max => 880,
+                                    :x => [800],
+                                    :x_max => [880],
                                     :y => 480,
-                                    :y_max => 608},
-                        :quest2 => {:points => 'q2_add_points',
-                                    :flower => 'q2_add_flower',
+                                    :y_max => 608,
+                                    :name => :quest1,
+                                    :max_index => 0},
+                        :quest2 => {:points => 2,
                                     :last_flower => 0,
                                     :flowers_list => [],
                                     :flowers_slots => [],
-                                    :time => 120,
+                                    :time => 150,
                                     :img => flower_pink,
                                     :size => 16,
-                                    :x => 128,
-                                    :x_max => 528,
+                                    :x => [128],
+                                    :x_max => [528],
                                     :y => 1024,
-                                    :y_max => 1152},
-                        :quest3 => {:points => 'q3_add_points',
-                                    :flower => 'q3_add_flower',
+                                    :y_max => 1152,
+                                    :name => :quest2,
+                                    :max_index => 0},
+                        :quest3 => {:points => 3,
                                     :last_flower => 0,
                                     :flowers_list => [],
                                     :flowers_slots => [],
-                                    :time => 120,
+                                    :time => 180,
                                     :img => flower_red,
                                     :size => 16,
                                     :x => [800, 928],
                                     :x_max => [880, 1104],
                                     :y => 48,
-                                    :y_max => 1176}
+                                    :y_max => 176,
+                                    :name => :quest3,
+                                    :max_index => 0}
     }
-    initialize_q1
+    reset_player
   end
 
   def button_down(id)
@@ -98,7 +103,11 @@ class EaWorldGame < Gosu::Window
     elsif id == Gosu::KbA
       if @show_balloon
         if @show_balloon == 'draw_blue_msg'
-          initialize_q1
+          initialize_quest(:quest1)
+        elsif @show_balloon == 'draw_pink_msg'
+          initialize_quest(:quest2)
+        elsif @show_balloon == 'draw_red_msg'
+          initialize_quest(:quest3)
         end
         @show_balloon = nil
       else
@@ -107,16 +116,17 @@ class EaWorldGame < Gosu::Window
             @show_balloon = 'draw_twin1_msg'
           elsif @map.near == 'Twin2'
             @show_balloon = 'draw_twin2_msg'
-          elsif @map.near == 'Woman'
+          elsif @map.near == 'Woman' && !@finished_quest.include?(:quest1) && !@active_quest
             @show_balloon = 'draw_blue_msg'
+          elsif @map.near == 'Oldman' && !@finished_quest.include?(:quest2) && !@active_quest
+            @show_balloon = 'draw_pink_msg'
+          elsif @map.near == 'Traveler' && !@finished_quest.include?(:quest3) && !@active_quest
+            @show_balloon = 'draw_red_msg'
           end
         end
       end
     elsif id == Gosu::KbSpace
-      150.times {
-        puts "\n"
-      }
-      puts "#{(@x + @player.x)}, #{@y + @player.y}"
+      puts
     end
   end
 
@@ -146,30 +156,35 @@ class EaWorldGame < Gosu::Window
     [minutes, seconds]
   end
 
-  def initialize_q1
-    @active_quest = @quest_functions[:quest1]
+  def initialize_quest(quest)
+    @active_quest = @quest_functions[quest]
     @start_quest = Gosu.milliseconds
+    count = id = 0
+    while count < @active_quest[:x].size
+      columns = (@active_quest[:x_max][count] - @active_quest[:x][count]) / 16
+      rows = (@active_quest[:y_max] - @active_quest[:y]) / 16
+      row_now = 0
+      column_now = 0
+      while row_now < rows
+        while column_now <= columns
+          @active_quest[:flowers_slots][id] = [@active_quest[:x][count] + (@active_quest[:size] * column_now), @active_quest[:y] + (@active_quest[:size] * row_now)]
+          column_now += 1
+          id +=1
+        end
+        row_now += 1
+        column_now = 0
+      end
+      count +=1
+    end
+    @active_quest[:max_index] = id - 1
   end
 
-  def q1_add_flower
-    size = 16
-    x = 800
-    x_max = 880
-    y = 480
-    y_max = 608
-    c = 0
-    actual_amount = @quest_functions[:quest1][:flowers_list].size
-    while @quest_functions[:quest1][:flowers_list].size == actual_amount
-      position_x = rand(x..x_max)
-      position_y = rand(y..y_max)
-      if actual_amount == 0
-        @quest_functions[:quest1][:flowers_list] << [position_x, position_y]
-      else
-        @quest_functions[:quest1][:flowers_list].each { |coord|
-          unless coord[1] <= position_y && position_y <= coord[1] + size && coord[0] <= position_x && position_x <= coord[0] + size
-            @quest_functions[:quest1][:flowers_list] << [position_x, position_y]
-          end
-        }
+  def add_flower
+    actual_amount = @active_quest[:flowers_list].size
+    while @active_quest[:flowers_list].size == actual_amount && @active_quest[:flowers_list].size != @active_quest[:flowers_slots].size
+      slot = rand(0..@active_quest[:max_index])
+      unless @active_quest[:flowers_list].include? @active_quest[:flowers_slots][slot]
+        @active_quest[:flowers_list] << @active_quest[:flowers_slots][slot]
       end
     end
   end
@@ -282,7 +297,15 @@ class EaWorldGame < Gosu::Window
   end
 
   def draw_blue_msg
-    @balloon_blue.draw(220-@x, 400-@y, 10)
+    @balloon_blue.draw(20-@x, 10-@y, 10)
+  end
+
+  def draw_pink_msg
+    @balloon_pink.draw(336-@x, 61-@y, 10)
+  end
+
+  def draw_red_msg
+    @balloon_red.draw(482-@x, 33-@y, 10)
   end
 
   def draw
@@ -296,19 +319,17 @@ class EaWorldGame < Gosu::Window
       monster.draw
     }
     @map.draw(@x, @y)
+    @font_score.draw("<b>PONTOS: #{@score}</b>", 10, 10, 10, 1, 1, 0xff000000, :default)
     if @map.near
       @font.draw("Pressione A para interagir com #{@map.near}", 10, 30, 10, 1, 1, 0xffffffff, :default)
     else
       @show_balloon = nil
     end
-    if @show_balloon
-      send(@show_balloon)
-    end
     if @active_quest
       time_left = get_time_left(@active_quest[:time])
       if time_left[0] > 0 || (time_left[0] == 0 && time_left[1] >= 1)
         if @active_quest[:last_flower] != time_left
-          send(@active_quest[:flower])
+          add_flower
           @active_quest[:last_flower] = time_left
         end
         formated_time = "%02d:%02d" % time_left
@@ -317,9 +338,13 @@ class EaWorldGame < Gosu::Window
           @active_quest[:img].draw(coord[0] - @x, coord[1] - @y, 1)
         }
       else
+        @finished_quest << @active_quest[:name]
         @active_quest = nil
       end
     end
-    @font_score.draw("<b>PONTOS: #{@score}</b>", 10, 10, 10, 1, 1, 0xff000000, :default)
+    if @show_balloon
+      send(@show_balloon)
+    end
   end
+
 end
