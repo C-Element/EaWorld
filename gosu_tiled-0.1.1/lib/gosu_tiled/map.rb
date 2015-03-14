@@ -12,7 +12,7 @@ module Gosu
         @tilesets = Tilesets.new(window, data['tilesets'], data_dir)
         @layers = Layers.new(window, data['layers'], width: @width, height: @height, tile_width: data['tilewidth'],
                              tile_height: data['tileheight'])
-        @collision_coord, @npc_coord = build_collision_coord
+        @collision_coord, @npc_coord = build_collision_coord # Instance variable to store coords
         @near = nil
       end
 
@@ -24,10 +24,6 @@ module Gosu
 
 
       ### All to down implemented by Clemente Jr
-
-      def get_collision_coord
-        @collision_coord
-      end
 
       def collides? (x, y, obj_width)
         @collision_coord.each { |object|

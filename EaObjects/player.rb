@@ -12,9 +12,8 @@ class Player
     @mid_height = 16
     @x = @def_x = 304
     @y = @def_y = 224
-    @foot_dist = 27
-    @i1, @i2, @i3, @i4, @i5, @i6, @i7, @i8, @i9, @i10, @i11, @i12 = Gosu::Image.load_tiles(window, 'player.png', @width, @height, false)
-    @iw1, @iw2, @iw3, @iw4, @iw5, @iw6, @iw7, @iw8, @iw9, @iw10, @iw11, @iw12 = Gosu::Image.load_tiles(window, 'player_water.png', @width, @height, false)
+    @foot_dist = 20
+    @i1, @i2, @i3, @i4, @i5, @i6, @i7, @i8, @i9, @i10, @i11, @i12 = Gosu::Image.load_tiles(window, 'img/player.png', @width, @height, false)
     @next = @i1
     @walk_group = [@i1, @i2, @i3]
   end

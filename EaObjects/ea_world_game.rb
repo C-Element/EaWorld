@@ -4,7 +4,7 @@ require_relative 'monster'
 require_relative 'npc'
 require_relative '../gosu_tiled-0.1.1/lib/gosu_tiled'
 
-$window = {:width => 640, :max_width => 1600, :mid_width => 320, :height => 480, :max_height => 1600,
+$window = {:width => 640, :max_width => 1200, :mid_width => 320, :height => 480, :max_height => 1200,
            :mid_height => 240}
 $full_screen = false
 $last_near = nil
@@ -21,36 +21,50 @@ class EaWorldGame < Gosu::Window
   def initialize
     super 640, 480, $full_screen
     self.caption = '..:: Ea World ::..'
-    @map = Gosu::Tiled.load_json(self, 'teste_mage_city.json')
+    @map = Gosu::Tiled.load_json(self, 'map.json')
     # Balloons
-    @balloon_twin1 = Gosu::Image.new(self, 'balloon_twin1.png', false)
-    @balloon_twin2 = Gosu::Image.new(self, 'balloon_twin2.png', false)
-    @balloon_blue = Gosu::Image.new(self, 'balloon_blue.png', false)
-    @balloon_pink = Gosu::Image.new(self, 'balloon_pink.png', false)
-    @balloon_red = Gosu::Image.new(self, 'balloon_red.png', false)
+    @balloon_twin1 = Gosu::Image.new(self, 'img/balloon_twin1.png', false)
+    @balloon_twin2 = Gosu::Image.new(self, 'img/balloon_twin2.png', false)
+    @balloon_blue = Gosu::Image.new(self, 'img/balloon_blue.png', false)
+    @balloon_pink = Gosu::Image.new(self, 'img/balloon_pink.png', false)
+    @balloon_red = Gosu::Image.new(self, 'img/balloon_red.png', false)
     # Flowers
-    flower_red = Gosu::Image.new(self, 'red.png', false)
-    flower_pink = Gosu::Image.new(self, 'light_pink.png', false)
-    flower_blue = Gosu::Image.new(self, 'blue.png', false)
-    @font = Gosu::Font.new(self, Gosu::default_font_name, 20)
+    flower_red = Gosu::Image.new(self, 'img/red.png', false)
+    flower_pink = Gosu::Image.new(self, 'img/light_pink.png', false)
+    flower_blue = Gosu::Image.new(self, 'img/blue.png', false)
     @font_score = Gosu::Font.new(self, Gosu::default_font_name, 25)
     @font_time = Gosu::Font.new(self, Gosu::default_font_name, 25)
     @player = Player.new(self)
     #Guards
-    @guard1 = NPC.new(self, 306, 454, 'guard.png')
-    @guard2 = NPC.new(self, 416, 454, 'guard.png')
+    @guard1 = NPC.new(self, 306, 454, 'img/guard.png')
+    @guard2 = NPC.new(self, 416, 454, 'img/guard.png')
     #NPCs
-    @oldman = NPC.new(self, 450, 165, 'oldman.png')
-    @woman = NPC.new(self, 134, 114, 'woman.png')
-    @traveler = NPC.new(self, 596, 134, 'traveler.png')
+    @oldman = NPC.new(self, 450, 165, 'img/oldman.png')
+    @woman = NPC.new(self, 134, 114, 'img/woman.png')
+    @traveler = NPC.new(self, 596, 134, 'img/traveler.png')
     # Etoi e Horea
-    etoi_horea1 = Monster.new(self, 560, 582)
-    etoi_horea2 = Monster.new(self, 776, 448, false)
-    etoi_horea3 = Monster.new(self, 274, 506)
-    @monsters = [etoi_horea1, etoi_horea2, etoi_horea3]
+    etoi_horea1 = Monster.new(self, 560, 582, 0)
+    etoi_horea2 = Monster.new(self, 776, 448, 1, false)
+    etoi_horea3 = Monster.new(self, 274, 506, 0)
+    etoi_horea4 = Monster.new(self, 176, 1004, 1, false)
+    etoi_horea5 = Monster.new(self, 288, 1004, 0, false)
+    etoi_horea6 = Monster.new(self, 480, 1004, 1, false)
+    etoi_horea7 = Monster.new(self, 128, 1042, 0)
+    etoi_horea8 = Monster.new(self, 368, 1126, 1)
+    etoi_horea9 = Monster.new(self, 720,80, 0)
+    etoi_horea10 = Monster.new(self, 784,224, 1)
+    etoi_horea11 = Monster.new(self, 960,48, 0, false)
+    etoi_horea12 = Monster.new(self, 1056,48, 1, false)
+    etoi_horea13 = Monster.new(self, 274, 732, 0)
+    etoi_horea14 = Monster.new(self, 274, 882, 1)
+    @monsters = [etoi_horea1, etoi_horea2, etoi_horea3, etoi_horea4, etoi_horea5, etoi_horea6, 
+      etoi_horea7, etoi_horea8, etoi_horea9, etoi_horea10, etoi_horea11, etoi_horea12, etoi_horea13, etoi_horea14]
+    bg_music = Gosu::Sample.new(self, 'sounds/melodic_adventure.ogg')
+    @death_music = Gosu::Sample.new(self, 'sounds/death.wav')
+    @picked_music = Gosu::Sample.new(self, 'sounds/picked.wav')
     @speed = 2
     @show_balloon = nil
-    @score = 666999
+    @score = 0
     @active_quest = nil
     @start_quest = Gosu.milliseconds
     @finished_quest = []
@@ -58,7 +72,7 @@ class EaWorldGame < Gosu::Window
                                     :last_flower => 0,
                                     :flowers_list => [],
                                     :flowers_slots => [],
-                                    :time => 120,
+                                    :time => 40,
                                     :img => flower_blue,
                                     :size => 16,
                                     :x => [800],
@@ -66,12 +80,14 @@ class EaWorldGame < Gosu::Window
                                     :y => 480,
                                     :y_max => 608,
                                     :name => :quest1,
-                                    :max_index => 0},
+                                    :max_index => 0,
+                                    :collected_points => 0
+                                    },
                         :quest2 => {:points => 2,
                                     :last_flower => 0,
                                     :flowers_list => [],
                                     :flowers_slots => [],
-                                    :time => 150,
+                                    :time => 70,
                                     :img => flower_pink,
                                     :size => 16,
                                     :x => [128],
@@ -79,12 +95,13 @@ class EaWorldGame < Gosu::Window
                                     :y => 1024,
                                     :y_max => 1152,
                                     :name => :quest2,
-                                    :max_index => 0},
+                                    :max_index => 0,
+                                    :collected_points => 0},
                         :quest3 => {:points => 3,
                                     :last_flower => 0,
                                     :flowers_list => [],
                                     :flowers_slots => [],
-                                    :time => 180,
+                                    :time => 90,
                                     :img => flower_red,
                                     :size => 16,
                                     :x => [800, 928],
@@ -92,9 +109,13 @@ class EaWorldGame < Gosu::Window
                                     :y => 48,
                                     :y_max => 176,
                                     :name => :quest3,
-                                    :max_index => 0}
+                                    :max_index => 0,
+                                    :collected_points => 0}
     }
-    reset_player
+    @x = @y = 50
+    @player.x = @player.def_x
+    @player.y = @player.def_y
+    bg_music.play(1, 1, true)
   end
 
   def button_down(id)
@@ -187,6 +208,17 @@ class EaWorldGame < Gosu::Window
         @active_quest[:flowers_list] << @active_quest[:flowers_slots][slot]
       end
     end
+  end
+
+  def colides_flower?(coord)
+    (@player.x .. @player.x + @player.width).each { |player_x|
+      if @player.y + @player.foot_dist + @y <= coord[1] + 10 && coord[1] + @active_quest[:size] <= @player.y + @player.height + @y
+        if coord[0] <= player_x + @x && player_x + @x <= coord[0] + @active_quest[:size]
+          return true
+        end
+      end
+    }
+    return false
   end
 
   def player_move_left
@@ -285,7 +317,11 @@ class EaWorldGame < Gosu::Window
     @x = @y = 50
     @player.x = @player.def_x
     @player.y = @player.def_y
-
+    @death_music.play
+    if @active_quest
+      @score -= @active_quest[:collected_points]
+      @active_quest[:collected_points] = 0
+    end
   end
 
   def draw_twin1_msg
@@ -319,12 +355,9 @@ class EaWorldGame < Gosu::Window
       monster.draw
     }
     @map.draw(@x, @y)
-    @font_score.draw("<b>PONTOS: #{@score}</b>", 10, 10, 10, 1, 1, 0xff000000, :default)
-    if @map.near
-      @font.draw("Pressione A para interagir com #{@map.near}", 10, 30, 10, 1, 1, 0xffffffff, :default)
-    else
-      @show_balloon = nil
-    end
+    formated_score = "%06d" % @score
+    @font_score.draw("<b>PONTOS: #{formated_score}</b>", 10, 10, 10, 1, 1, 0xff000000, :default)
+    @show_balloon = nil unless @map.near && @show_balloon
     if @active_quest
       time_left = get_time_left(@active_quest[:time])
       if time_left[0] > 0 || (time_left[0] == 0 && time_left[1] >= 1)
@@ -334,9 +367,18 @@ class EaWorldGame < Gosu::Window
         end
         formated_time = "%02d:%02d" % time_left
         @font_time.draw("<b>TEMPO RESTANTE: #{formated_time}", 370, 10, 10, 1, 1, 0xff000000, :default)
-        @active_quest[:flowers_list].each { |coord|
-          @active_quest[:img].draw(coord[0] - @x, coord[1] - @y, 1)
-        }
+        count = 0
+        while count < @active_quest[:flowers_list].size
+          if colides_flower?(@active_quest[:flowers_list][count])
+            @active_quest[:flowers_list].delete_at(@active_quest[:flowers_list].index(@active_quest[:flowers_list][count]))
+            @score += @active_quest[:points]
+            @active_quest[:collected_points] += @active_quest[:points]
+            @picked_music.play
+          else
+            @active_quest[:img].draw(@active_quest[:flowers_list][count][0] - @x, @active_quest[:flowers_list][count][1] - @y, 1)
+            count += 1
+          end
+        end
       else
         @finished_quest << @active_quest[:name]
         @active_quest = nil

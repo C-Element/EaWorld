@@ -1,13 +1,13 @@
 require 'gosu'
 
 class Monster
-  def initialize(window, pos_x, pos_y, horizontal=true)
+  def initialize(window, pos_x, pos_y, tipe, horizontal=true)
     @start_x = @x = pos_x
     @start_y = @y = pos_y
     @horizontal = horizontal
     @width = 24
     @height = 32
-    image = ((rand * 1 + 6) %2 == 0 ? 'mosnter001.png' : 'monster002.png')
+    image = (tipe == 0 ? 'img/monster001.png' : 'img/monster002.png')
     @i1, @i2, @i3, @i4, @i5, @i6, @i7, @i8, @i9, @i10, @i11, @i12 = Gosu::Image.load_tiles(window, image, @width, @height, false)
     @next = (@horizontal ? @i4 : @i7)
     @last_time = -1
@@ -30,7 +30,7 @@ class Monster
 
   def colides?(map_x, map_y, player)
     (player.x .. player.x + player.width).each { |player_x|
-      if (@start_y + (!@horizontal ? @actual_pos : 0) + @foot_dist) <= (player.y + player.foot_dist + map_y) && (player.y + player.foot_dist + map_y) <= (@start_y + @height + (!@horizontal ? @actual_pos : 0))
+      if (player.y + player.foot_dist + map_y) <= (@start_y + (!@horizontal ? @actual_pos : 0) + @foot_dist)  && (@start_y + @height + (!@horizontal ? @actual_pos : 0)) <= (player.y + player.height + map_y)
         if (@start_x + (@horizontal ? @actual_pos : 0) + 5) <= (player_x + map_x) && (player_x + map_x) <= (@start_x + @width + (@horizontal ? @actual_pos : 0) - 10)
           return true
         end
