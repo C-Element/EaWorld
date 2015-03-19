@@ -33,6 +33,7 @@ class EaWorldGame < Gosu::Window
     flower_pink = Gosu::Image.new(self, 'img/light_pink.png', false)
     flower_blue = Gosu::Image.new(self, 'img/blue.png', false)
     @font_score = Gosu::Font.new(self, Gosu::default_font_name, 25)
+    @font_pause = Gosu::Font.new(self, Gosu::default_font_name, 120)
     @font_time = Gosu::Font.new(self, Gosu::default_font_name, 25)
     @player = Player.new(self)
     #Guards
@@ -68,6 +69,9 @@ class EaWorldGame < Gosu::Window
     @active_quest = nil
     @start_quest = Gosu.milliseconds
     @finished_quest = []
+    @paused = false
+    @pause_start = nil
+    @total_paused = 0
     @quest_functions = {:quest1 => {:points => 1,
                                     :last_flower => 0,
                                     :flowers_list => [],
@@ -147,34 +151,49 @@ class EaWorldGame < Gosu::Window
         end
       end
     elsif id == Gosu::KbSpace
-      puts
+      pause_game
     end
   end
 
   def update
-    if button_down?(Gosu::KbLeft)
-      player_move_left
-    elsif button_down?(Gosu::KbRight)
-      player_move_right
-    elsif button_down?(Gosu::KbUp)
-      player_move_up
-    elsif button_down?(Gosu::KbDown)
-      player_move_down
-    else
-      @player.walk false
+    unless @paused
+      if button_down?(Gosu::KbLeft)
+        player_move_left
+      elsif button_down?(Gosu::KbRight)
+        player_move_right
+      elsif button_down?(Gosu::KbUp)
+        player_move_up
+      elsif button_down?(Gosu::KbDown)
+        player_move_down
+      else
+        @player.walk false
+      end
+      @monsters.each { |monster|
+        monster.update(@x, @y)
+        monster.walk
+        reset_player if monster.colides?(@x, @y, @player)
+      }
     end
-    @monsters.each { |monster|
-      monster.update(@x, @y)
-      monster.walk
-      reset_player if monster.colides?(@x, @y, @player)
-    }
   end
 
   def get_time_left(total_seconds)
-    time_now = total_seconds - ((Gosu.milliseconds-@start_quest)/1000)
+    time_now = total_seconds - ((Gosu.milliseconds-@start_quest-(@paused ? Gosu.milliseconds - @pause_start : 0))/1000)
     minutes = time_now/60
     seconds = time_now%60
     [minutes, seconds]
+  end
+
+  def pause_game
+    if @paused
+      if @active_quest
+        @start_quest += (Gosu.milliseconds - @pause_start)
+        @pause_start = nil
+      end
+      @paused = false
+    else
+      @pause_start = Gosu.milliseconds if @active_quest
+      @paused = true
+    end
   end
 
   def initialize_quest(quest)
@@ -198,6 +217,7 @@ class EaWorldGame < Gosu::Window
       count +=1
     end
     @active_quest[:max_index] = id - 1
+    @total_paused = 0
   end
 
   def add_flower
@@ -345,7 +365,6 @@ class EaWorldGame < Gosu::Window
   end
 
   def draw
-    @player.draw
     @guard1.draw(@x, @y)
     @guard2.draw(@x, @y)
     @woman.draw(@x, @y)
@@ -384,8 +403,12 @@ class EaWorldGame < Gosu::Window
         @active_quest = nil
       end
     end
+    @player.draw
     if @show_balloon
       send(@show_balloon)
+    end
+    if @paused
+      @font_pause.draw("II", 300, 185, 10, 1, 1, 0xff000000, :default)
     end
   end
 
